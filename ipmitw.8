@@ -1,0 +1,85 @@
+.\" This file is licensed under the BSD\[hy]3\[hy]Clause license.
+.\" See the AUTHORS and LICENSE files for more information.
+.Dd November 20, 2015
+.Dt IPMITW 8
+.Os \" Current operating system.
+.
+.Sh NAME
+.Nm ipmitw
+.Nd a simple wrapper around
+.Cm ipmitool .
+.
+.Sh SYNOPSIS
+.Nm
+.Op Fl h , Fl Fl help
+.Op Fl V , Fl Fl version
+|
+.Ar machine_name
+.Op ...
+.Ar <ipmitool commands>
+.Op ...
+.
+.Sh DESCRIPTION
+.Nm
+is a wrapper around
+.Cm ipmitool .
+It helps avoid some of the repetitive verbosity of
+.Cm ipmitool
+and simplifies running the same command on multiple machines.
+.
+.Sh COMMANDS
+All arguments are considered target machine names until the first matching
+top\-level
+.Cm ipmitool
+command or flag. This does mean that you can't target a machine with the same
+name as those commands. However, most are pretty arcane
+.Po except for
+.Ar firewall
+and
+.Ar lan
+.Pc .
+.Pp
+See
+.Xr ipmitool 1
+for more information.
+.
+.Sh EXIT STATUS
+.Nm
+exits 0 on success and 1 if an error occurs.
+.
+.Sh EXAMPLES
+.Pp
+Get available SoL ciphers:
+.Dl ipmitw machine1-ipmi channel getciphers sol
+.Pp
+Restart machines. If your shell supports brace expansion (most do), use it to
+define a range of machines:
+.Dl ipmitw machine{1..20}-ipmi power reset
+.Pp
+Have servers boot directly to PXE on next boot:
+.Dl ipmitw machine{1..20}-ipmi machine52-ipmi chassis bootdev pxe
+.
+.Sh BUGS
+.Pp Hopefully none.
+.
+.Sh SEE ALSO
+.Xr ipmitool 1
+.Pp
+The
+.Nm
+repository is available at
+.Lk https://github.com/Alexqw/ipmitw
+Bug reports, patches, and (constructive) input are always welcome.
+.Sh AUTHOR
+.Nm
+was created by
+.An Alex Waite
+.Mt Alexqw85@gmail.com .
+See the AUTHORS file for more information.
+.
+.Sh COPYRIGHT
+.Nm
+is released under the
+.Qq BSD\[hy]3\[hy]Clause License.
+See the LICENSE file for more information.
+.
