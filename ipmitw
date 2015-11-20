@@ -1,0 +1,113 @@
+#!/bin/sh
+# This file is licensed under the BSD-3-Clause license.
+# Alex Waite 2015
+#
+# A wrapper around ipmitool, to reduce verbosity and make it easier to use on multiple nodes.
+
+# customize these to your site's needs
+IPMITOOL_STATIC_ARGS="-I lanplus -U ADMIN"
+readonly PW_PROMPT='true'
+
+#
+# VARS
+#
+readonly VERSION='1.0.0'
+readonly SCRIPT_NAME=${0##*/}
+TAB=`printf '\t'`
+readonly NEWLINE='
+'
+HOSTS=''
+CMDS=''
+CMD=''
+
+#
+# Functions
+#
+Fatal() {
+    printf '%s\n' "$*" >&2
+    exit 1
+}
+
+Help() {
+    cat << EOF
+$SCRIPT_NAME v${VERSION}
+
+Syntax:
+$SCRIPT_NAME [-h] [-V] | machine [...] <ipmitool commands [...]>
+
+OPTIONS:
+  -h, --help                     = Print this help and exit
+  -V, --version                  = Print the version number and exit
+
+See ipmitool for valid ipmitool commands.
+
+EXAMPLES:
+  $SCRIPT_NAME machine1-ipmi machine2-ipmi chassis status
+  $SCRIPT_NAME machine1-ipmi machine{10..20}-ipmi power reset
+
+EOF
+}
+
+#
+# Main
+#
+
+# ipmitw args
+case "$1" in
+    -h|--help) Help; exit 0;;
+    -V|--version) printf '%s v%s\n' "$SCRIPT_NAME" "$VERSION"; exit 0;;
+    -*) Fatal "'$1' is not a valid '$SCRIPT_NAME' option.";;
+esac
+
+# build list of ipmitool commands
+IPMITOOL_HELP=`ipmitool -h 2>&1` || Fatal "ipmitool is required, but it's not installed (or at least in the path). Aborting."
+IFS=$NEWLINE
+for LINE in ${IPMITOOL_HELP##*Commands:}; do
+    LINE=${LINE#${LINE%%[!\ $TAB]*}} # trim leading whitespace
+    CMD=${LINE%% *} # grab first word
+    CMDS="${CMDS:+$CMDS }${CMD}"
+done
+unset IFS
+
+# build list of hosts
+while [ -n "$1" ]; do
+    # detect ipmitool option flags
+    [ -z "${1##-*}" ] && break
+
+    # detect ipmitool command
+    [ -z "${CMDS##* ${1} *}" ] && break # middle
+    [ -z "${CMDS##${1} *}" ] && break # first
+    [ -z "${CMDS%%* ${1}}" ] && break # last
+
+    HOSTS="${HOSTS:+$HOSTS }${1}"
+    shift
+done
+
+# Anything leftover are arguments for ipmitool
+IPMITOOL_SUPPLIED_ARGS=$@
+
+if [ "$PW_PROMPT" = 'true' ]; then
+    printf 'Enter Password: '
+
+    # The malarkey below is all to suppress echoing the password to the terminal.
+    # `read -s` is, unfortunately, non-POSIX
+    ORIG_STTY=`stty -g`
+    stty -echo
+    trap 'stty $ORIG_STTY' EXIT
+      read IPMI_PASSWORD
+      stty $ORIG_STTY
+    trap - EXIT
+
+    printf '\n'
+    IPMITOOL_STATIC_ARGS="$IPMITOOL_STATIC_ARGS -P $IPMI_PASSWORD"
+fi
+
+for HOST in $HOSTS; do
+    if [ "$PW_PROMPT" = 'true' ]; then
+        printf "\n\033[94mRunning: ipmitool %s -P HIDDEN -H %s %s\033[0m\n" "${IPMITOOL_STATIC_ARGS%% -P *}" "$HOST" "$IPMITOOL_SUPPLIED_ARGS"
+    else
+        printf "\n\033[94mRunning: ipmitool %s -H %s %s\033[0m\n" "$IPMITOOL_STATIC_ARGS" "$HOST" "$IPMITOOL_SUPPLIED_ARGS"
+    fi
+
+    ipmitool $IPMITOOL_STATIC_ARGS -H "$HOST" $IPMITOOL_SUPPLIED_ARGS
+done
