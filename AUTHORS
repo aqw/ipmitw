@@ -1,4 +1,4 @@
-The primary author of ipmitw is Alex Waite <Alexqw85@gmail.com>.
+The primary author of ipmitw is Alex Waite <alex@waite.eu>.
 Credit to Stephen M. Rumble and John Ousterhout for writing a Python script
 called ipmitw, which was the inspiration for me to write this script.
 See the commit log for additional author information.
