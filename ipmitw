@@ -1,5 +1,5 @@
 #!/bin/sh
-# This file is licensed under the BSD-3-Clause license.
+# This file is licensed under the ISC license.
 # Alex Waite 2015
 #
 # A wrapper around ipmitool, to reduce verbosity and make it easier to use on multiple nodes.
