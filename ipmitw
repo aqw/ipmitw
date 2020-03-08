@@ -11,7 +11,7 @@ readonly PW_PROMPT='true'
 #
 # VARS
 #
-readonly VERSION='1.0.0'
+readonly VERSION='1.0.1'
 readonly SCRIPT_NAME=${0##*/}
 TAB=`printf '\t'`
 readonly NEWLINE='
@@ -94,7 +94,7 @@ if [ "$PW_PROMPT" = 'true' ]; then
     ORIG_STTY=`stty -g`
     stty -echo
     trap 'stty $ORIG_STTY' EXIT
-      read IPMI_PASSWORD
+      read -r IPMI_PASSWORD
       stty $ORIG_STTY
     trap - EXIT
 
